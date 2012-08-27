@@ -41,7 +41,10 @@ easy to add methods implementation. Plese fork this module on github.
         # If the trac works without authentication
         # you should use a bit different url:
         # host => "https://trac.example.com/test/rpc",
-                                
+
+        # in some versions, you need different url for login than trac actions
+        # auth_url    => 'http://xp-dev.com/trac/mytrac/login,
+        # use_cookies => 1,
     };
 
     my $tr = Trac::RPC->new($params);
@@ -194,6 +197,7 @@ use base qw(
     Trac::RPC::Wiki
     Trac::RPC::System
     Trac::RPC::Tools
+    Trac::RPC::Ticket
 );
 
 1;

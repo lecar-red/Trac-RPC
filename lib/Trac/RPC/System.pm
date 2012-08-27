@@ -5,7 +5,7 @@ package Trac::RPC::System;
 
 =head1 NAME
 
-Trac::RPC::Wiki - access to Trac System methods via Trac XML-RPC Plugin
+Trac::RPC::System - access to Trac System methods via Trac XML-RPC Plugin
 
 =cut
 

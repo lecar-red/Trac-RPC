@@ -43,10 +43,19 @@ sub new {
         $self->{host},
         error_handler => sub {error($self, @_)},
         fault_handler => sub {error($self, @_)},
+        useragent     => [ $params->{use_cookies} ? ( cookie_jar => {} ) : () ]
     );
 
     if ( $self->{realm} && $self->{user} && $self->{password} ) {
         $self->{rxc}->credentials($self->{realm}, $self->{user}, $self->{password});
+    }
+
+    # do auth before any other request
+    if ( $params->{auth_url} ) {
+        my $resp = $self->{rxc}->useragent->get( $params->{auth_url} );
+        
+        die "Failed auth: " . $resp->message
+            unless $resp->is_success;
     }
 
     bless($self, $class);
