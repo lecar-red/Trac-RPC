@@ -1,11 +1,9 @@
 package Trac::RPC;
 
+# ABSTRACT: access to Trac via XML-RPC Plugin
+
 =encoding UTF-8
 =cut
-
-=head1 NAME
-
-Trac::RPC - access to Trac via XML-RPC Plugin
 
 =head1 DESCRIPTION
 
@@ -26,6 +24,9 @@ the presense of XmlRpcPlugin.
 This is the very early version of Trac::RPC. It has only several
 API methods implemented, but it is a skeleton and it is very
 easy to add methods implementation. Plese fork this module on github.
+
+Trac::RPC version numbers uses Semantic Versioning standart.
+Please visit L<http://semver.org/> to find out all about this great thing.
 
 =head1 SYNOPSIS
 
@@ -98,7 +99,7 @@ For now the module has very few API methods implemented. Here is the list:
     wiki.getPage
     wiki.putPage
 
-=head1 NOT IMPLEMENTED METHODS 
+=head1 NOT IMPLEMENTED METHODS
 
 And here is the list of all API methods that needed to be implementd:
 
@@ -178,11 +179,7 @@ And here is the list of all API methods that needed to be implementd:
     search.getSearchFilters
     search.performSearchend
 
-=head1 AUTHOR
-
-Ivan Bessarabov, C<< <ivan@bessarabov.ru> >>
-
-=head1 SOURCE CODE 
+=head1 SOURCE CODE
 
 The source code for this module is hosted on GitHub http://github.com/bessarabov/Trac-RPC
 
@@ -190,8 +187,6 @@ The source code for this module is hosted on GitHub http://github.com/bessarabov
 
 use strict;
 use warnings;
-
-our $VERSION = 0.01;
 
 use base qw(
     Trac::RPC::Wiki
