@@ -1,0 +1,232 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use lib qw( lib );
+
+use Config::Tiny;
+use Data::Dumper qw(Dumper);
+use File::Basename qw( basename );
+use Getopt::Long;
+use Trac::RPC;
+
+# clean this up a bit
+my @ticket_properties = (
+    'priority|p=s',
+    'keywords|p=s'
+);
+
+my $config = load_config(); 
+my $args   = parse_args();
+
+# for now lets now bother merging command line options
+my $trac = Trac::RPC->new( $config );
+
+eval {
+
+    #
+    # these should probably do a listing of tickets and grab summary, priority and ?
+    #
+
+    if ( $args->{'list-assigned-tickets'} ) {
+        # needs to be smarter here but first pass
+        my @props = ticket_properties( $args );
+        my $tickets = $trac->query_ticket( 
+            join('&', ( @props,  sprintf 'assigned=%s', $config->{user} ) )
+        );
+
+        foreach my $id ( @{ $tickets } ) {
+            my $details = get_ticket_details($id);
+            my $attrs   = $details->[3];
+
+            # output format: (for now)
+            # ticket_id summary changed
+            printf "%d %s %s\n", $id, $details->[2], $attrs->{summary};
+        } 
+
+        #print Dumper( $tickets ), "\n";
+        exit;
+    }
+
+    if ( $args->{'list-owner-tickets'} ) {
+        my $tickets = $trac->query_ticket( sprintf 'owner=%s', $config->{user} );
+        print Dumper( $tickets ), "\n";
+        exit;
+    }
+
+    # 
+    # retrieve ticket details
+    #
+
+    if ( $args->{'get-ticket'} ) {
+        my $ticket = $trac->get_ticket( $args->{'get-ticket'} );
+        print Dumper( $ticket ), "\n";
+    }
+
+    # 
+    # create ticket
+    #
+    if ( $args->{'create-ticket'} ) {
+        # key $args for required parts or should we just pass them in
+    }
+
+    #
+    # add comment 
+    #
+    if ( $args->{'comment-ticket'} ) {
+    }
+
+};
+
+if ( my $e = Exception::Class->caught() ) {
+    warn $e;
+}
+
+exit;
+
+eval {
+    print $trac->get_page('WikiStart'), "\n";
+};
+
+if ( my $e = Exception::Class->caught() ) {
+    warn $e;
+
+    print Dumper( $trac ), "\n";
+}
+
+eval {
+    my $ticket = $trac->get_ticket(1);
+    print Dumper( $ticket ), "\n";
+};
+
+if ( my $e = Exception::Class->caught() ) {
+    warn $e;
+
+    print Dumper( $trac ), "\n";
+}
+
+eval {
+    my $tickets = $trac->query_ticket( 'owner=lcarmich' );
+    print Dumper( $tickets ), "\n";
+};
+
+if ( my $e = Exception::Class->caught() ) {
+    warn $e;
+
+    print Dumper( $trac ), "\n";
+}
+
+if (0) {
+eval {
+    my $id = $trac->create_ticket( 
+        summary     => "Summary",
+        description => "Description",
+        # leave all as defaults for now
+        attributes  => {},
+        notfy       => 1
+    );
+
+    print "Create ticket $id\n";
+};
+
+if ( my $e = Exception::Class->caught() ) {
+    warn $e;
+
+    print Dumper( $trac ), "\n";
+}
+}
+
+print Dumper( $trac->get_ticket_fields ), "\n";
+
+print Dumper( $trac->get_ticket_actions(1) ) , "\n";
+
+exit;
+
+# test update on ticket #2
+my $ticket = $trac->update_ticket( 
+    id      => 2,
+    comment => "Test run update test: " . scalar(time()),
+);
+
+print Dumper( $ticket ), "\n";
+
+exit;
+
+sub parse_args {
+    my %opts;
+
+    GetOptions( \%opts, 
+        'h|help',
+        'username=s',
+        'password=s',
+        'host=s',
+        #'command=s',
+        'list-assigned-tickets|l|ass',
+        'list-owner-ticket|lo|my',
+        'get-ticket|g=s',
+        #
+        # properties for commands above (might be nice to set as defaults in ini)
+        #
+        # TODO: add component, etc...
+        #
+        @ticket_properties
+        #
+        # TODO: add max and page 
+        #
+    ) or die "Unknown command line argument";
+
+    usage() if $opts{h};
+
+    return \%opts;
+}
+
+sub usage {
+    my $me = basename $0;
+    my $props = join "\n", map { "  -" . (split /\|/)[0] } @ticket_properties;
+
+    print STDERR <<END_USAGE;
+$0 --my 
+
+Tickets: 
+ --ass = list assigned tickets
+ --my  = list tickets that you own 
+
+  Properities to search by:
+$props
+
+Account Details:
+ uses ~/.trac-cli.conf
+ 
+END_USAGE
+
+    exit;
+
+}
+
+sub ticket_properties {
+    my $args  = shift;
+    # break into param names
+    my @props = map { (split /\|/)[0] } @ticket_properties;
+
+    # return in setup list 
+    return map { defined $args->{$_} ? sprintf("%s=%s", $_, $args->{$_}) : () } @props;
+}
+
+sub get_ticket_details {
+    my $id = shift || return {};
+
+    # trac is kind of global right here :)
+    return $trac->get_ticket( $id );
+}
+
+sub load_config {
+    my $file = sprintf "%s/.trac-cli.conf", $ENV{HOME};
+
+    if ( !-r $file ) {
+        die "Missing or unreadable config file: $file\n";
+    }
+
+    # return root of config
+    return Config::Tiny->read( $file )->{_};
+}
